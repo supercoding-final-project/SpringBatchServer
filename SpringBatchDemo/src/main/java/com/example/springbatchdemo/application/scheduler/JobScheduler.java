@@ -17,21 +17,21 @@ public class JobScheduler {
 	private final Job updateStarJop;
 	private final JobLauncher jobLauncher;
 
-	@Scheduled(cron = "0 35 * * * ?")
+	@Scheduled(cron = "0 0 * * * ?")
 	public void runCreateSearchHistoryJob() throws Exception{
 		jobLauncher.run(createSearchHistoryJob, new JobParametersBuilder()
 				.addDate("date", new Date())
 				.toJobParameters());
 	}
 
-	@Scheduled(cron = "0 35 * * * ?")
+	@Scheduled(cron = "0 3 * * * ?")
 	public void runUpdateSkillStackSearchCountJob() throws Exception{
 		jobLauncher.run(updateSkillStackSearchCountJob, new JobParametersBuilder()
 				.addDate("date", new Date())
 				.toJobParameters());
 	}
 
-	@Scheduled(cron = "0 35 * * * ?")
+	@Scheduled(cron = "0 6 * * * ?")
 	public void runUpdateStarJop() throws Exception{
 		jobLauncher.run(updateStarJop, new JobParametersBuilder()
 				.addDate("date", new Date())
