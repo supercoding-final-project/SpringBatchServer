@@ -59,4 +59,8 @@ public class Mentor extends CommonEntity {
 
 	@Column(name = "star")
 	private Float star;
+
+	public void updateStar(Float star) {
+		this.star = star;
+	}
 }

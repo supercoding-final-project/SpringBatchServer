@@ -3,7 +3,6 @@ package com.example.springbatchdemo.domain.repository;
 import com.example.springbatchdemo.application.model.PostStarSummary;
 import com.example.springbatchdemo.domain.entity.Posts;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,7 +21,8 @@ public interface PostsRepository extends JpaRepository<Posts, Long> {
 					"AND rSub.createdAt < :jobTime " +
 					") " +
 					"AND r.isDeleted = false " +
-					"AND p.isDeleted = false "
+					"AND p.isDeleted = false " +
+					"GROUP BY p.postId "
 	)
 	Page<PostStarSummary> getPostStarSummary(Instant jobTime, Instant lastJobTime, Pageable pageable);
 }

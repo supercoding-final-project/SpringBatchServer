@@ -1,7 +1,10 @@
 package com.example.springbatchdemo.application.job;
 
+import com.example.springbatchdemo.application.model.MentorStarSummary;
 import com.example.springbatchdemo.application.model.PostStarSummary;
+import com.example.springbatchdemo.domain.entity.Mentor;
 import com.example.springbatchdemo.domain.entity.Posts;
+import com.example.springbatchdemo.domain.repository.MentorRepository;
 import com.example.springbatchdemo.domain.repository.PostsRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,12 +37,14 @@ public class UpdateStarJopConfig {
 	private final JobBuilderFactory jobBuilderFactory;
 	private final StepBuilderFactory stepBuilderFactory;
 	private final PostsRepository postsRepository;
+	private final MentorRepository mentorRepository;
 
 	@Bean
 	public Job updateStarJop(){
 		return jobBuilderFactory.get("updateStarJop")
 				.incrementer(new RunIdIncrementer())
 				.start(updatePostStarStep())
+				.next(updateMentorStarStep())
 				.build();
 	}
 
@@ -51,6 +56,17 @@ public class UpdateStarJopConfig {
 				.reader(postStarSummaryReader())
 				.processor(postStarSummaryProcessor())
 				.writer(postStarSummaryWriter())
+				.build();
+	}
+
+	@Bean
+	@JobScope
+	public Step updateMentorStarStep(){
+		return stepBuilderFactory.get("updateMentorStarStep")
+				.<MentorStarSummary, Mentor>chunk(CHUNK_SIZE)
+				.reader(mentorStarSummaryReader())
+				.processor(MentorStarSummaryProcessor())
+				.writer(mentorStarSummaryWriter())
 				.build();
 	}
 
@@ -72,27 +88,53 @@ public class UpdateStarJopConfig {
 				.build();
 	}
 
+	@Bean
+	public RepositoryItemReader<MentorStarSummary> mentorStarSummaryReader(){
+		LocalDateTime jobTime = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
+		Instant jobTimeInstant = jobTime.atZone(ZoneOffset.systemDefault()).toInstant();
+
+		return new RepositoryItemReaderBuilder<MentorStarSummary>()
+				.name("mentorStarSummaryReader")
+				.repository(mentorRepository)
+				.methodName("getMentorStarSummary")
+				.arguments(jobTimeInstant)
+				.pageSize(CHUNK_SIZE)
+				.sorts(Map.of("id", Sort.Direction.ASC))
+				.build();
+	}
+
 	public ItemProcessor<PostStarSummary, Posts> postStarSummaryProcessor() {
-		log.info("!!!");
 		return postStarSummary -> {
+			Posts posts = postsRepository.findById(postStarSummary.getPostId()).get();
 
-			if (postStarSummary.getPostId() != null) {
-				Posts posts = postsRepository.findById(
-						postStarSummary.getPostId()).get();
+			Double starAvg = postStarSummary.getStarAvg();
+			Float updateStar = Math.round(starAvg * 10) / 10f;
+			posts.updateStar(updateStar);
+			return posts;
+		};
+	}
 
-				Double starAvg = postStarSummary.getStarAvg();
-				Float updateStar = Math.round(starAvg * 10) / 10f;
-				posts.updateStar(updateStar);
-				return posts;
-			}
+	public ItemProcessor<MentorStarSummary, Mentor> MentorStarSummaryProcessor() {
+		return MentorStarSummary -> {
+			log.info("mentor Id : {}", MentorStarSummary.getMentorId());
+			Mentor mentor = mentorRepository.findById(MentorStarSummary.getMentorId()).get();
 
-			return null;
+			Double starAvg = MentorStarSummary.getStarAvg();
+			Float updateStar = Math.round(starAvg * 10) / 10f;
+			mentor.updateStar(updateStar);
+			return mentor;
 		};
 	}
 
 	public RepositoryItemWriter<Posts> postStarSummaryWriter() {
 		return new RepositoryItemWriterBuilder<Posts>()
 				.repository(postsRepository)
+				.build();
+	}
+
+	public RepositoryItemWriter<Mentor> mentorStarSummaryWriter() {
+		return new RepositoryItemWriterBuilder<Mentor>()
+				.repository(mentorRepository)
 				.build();
 	}
 }
