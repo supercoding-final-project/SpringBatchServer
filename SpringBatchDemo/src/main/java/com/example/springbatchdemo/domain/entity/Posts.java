@@ -37,4 +37,8 @@ public class Posts extends CommonEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mentor_id")
     private Mentor mentor;
+
+    public void updateStar(Float star) {
+        this.star = star;
+    }
 }
