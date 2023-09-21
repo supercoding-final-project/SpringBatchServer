@@ -27,7 +27,7 @@ import org.springframework.data.domain.Sort;
 @Configuration
 @Slf4j
 @RequiredArgsConstructor
-public class updateSkillStackSearchCountJobConfig {
+public class UpdateSkillStackSearchCountJobConfig {
 
 	private static final int CHUNK_SIZE = 1000;
 	private final JobBuilderFactory jobBuilderFactory;
